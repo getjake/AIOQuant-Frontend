@@ -14,12 +14,26 @@ const Home = () => {
     if (lastMessage) {
       console.log(lastMessage.data);
     }
-
-
     if (lastMessage !== null) {
       setMessageHistory((prev) => prev.concat(lastMessage));
     }
   }, [lastMessage, setMessageHistory]);
+
+  useEffect(()=>{
+    // HOW TO SEND MSG.
+    const message = {
+      n: 'CommandExchange',
+      d: {
+        t: 'frontend',
+        m: {
+          main: 'this message is sent from NEXTJS INTERFACE',
+        },
+        ts: 11,
+      },
+    };
+    sendMessage(JSON.stringify(message))
+
+  },[])
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
