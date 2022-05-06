@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "amqplib": "^0.8.0",
+    "websocket": "^1.0.34"
+  }
+}
