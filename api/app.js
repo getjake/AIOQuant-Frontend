@@ -9,7 +9,7 @@ const RABBITMQ_URL = 'amqp://localhost:5672/';
 const exchange = 'Command';
 const queuePublish = 'USDT_ARBITRAGE_SERVER.Command.WEBSOCKET2AIOQ';
 const queueSubscribe = 'USDT_ARBITRAGE_SERVER.Command.AIOQ2WEBSOCKET';
-
+const routingKey = 'USDT_ARBITRAGE_SERVER'
 let channelPublish;
 let channelSubscribe;
 
@@ -33,7 +33,7 @@ const init = async () => {
     autoDelete: true,
   });
   await channelSubscribe.assertExchange(exchange, 'topic', { durable: true });
-  await channelSubscribe.bindQueue(queueSubscribe, exchange, '');
+  await channelSubscribe.bindQueue(queueSubscribe, exchange, routingKey);
   console.log('Websocket API Ready, waiting for client connection')
 };
 init();
@@ -82,7 +82,7 @@ wss.on('connection', (ws) => {
           console.error(err);
           return;
         }
-        channelPublish.publish(exchange, '', compressedData);
+        channelPublish.publish(exchange, routingKey, compressedData);
         console.log('Msg sent to Backend via Websocket Server!!');
       });
     } catch (error) {

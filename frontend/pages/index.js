@@ -4,38 +4,27 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 
 const Home = () => {
-  //Public API that will echo messages sent to it back to the client
-  const socketUrl = 'ws://localhost:8080';
-  const [messageHistory, setMessageHistory] = useState([]);
-  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
-  useEffect(() => {
-    if (lastMessage !== null) {
-      console.log(lastMessage.data);
-    }
-    if (lastMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastMessage));
-    }
-  }, [lastMessage, setMessageHistory]);
+  // Websocket Endpoint
+  const socketUrl = 'ws://localhost:8080/';
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
+    onOpen: () => {
+      // do something when Websocket Connected!
+    },
+    shouldReconnect: (closeEvent) => true,
+    reconnectAttempts: 10000,
+    reconnectInterval: 3000, // 3 second
+  });
 
-  useEffect(()=>{
-    // HOW TO SEND MSG.
-    setInterval(() => {
-      const message = {
-        n: 'CommandExchange',
-        d: {
-          t: 'backend',
-          m: {
-            main: 'this message is sent from NEXTJS INTERFACE',
-            time: +new Date()
-          },
-          ts: 11,
-        },
-      };
-      sendMessage(JSON.stringify(message))
-      console.log("I sent the message ")
-    }, 3000);
-    
-  },[])
+  // ****** States *******
+  // Message Structure from Backend - Info received from backend
+  const [status, setStatus] = useState([]);
+  const [params, setParams] = useState([]);
+  const [response, setResponse] = useState({});
+  const [loggingInfo, setLoggingInfo] = useState('');
+  const [loggingWarning, setLoggingWarning] = useState('');
+  const [loggingError, setLoggingError] = useState('');
+  // Command to be sent to backend
+  const [request, setRequest] = useState({});
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
@@ -44,6 +33,93 @@ const Home = () => {
     [ReadyState.CLOSED]: 'Closed',
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
   }[readyState];
+
+  // ****** Functions *******
+  const publishMessage = (content) => {
+    // Publish Message to Backend via Websocket - Low-level function
+    const message = {
+      n: 'CommandExchange',
+      d: {
+        t: 'backend',
+        m: {
+          ...content,
+        },
+        ts: Math.floor(Date.now() / 1000),
+      },
+    };
+    sendMessage(JSON.stringify(message));
+  };
+
+  useEffect(() => {
+    // Deal with the message from backend.
+    if (lastMessage !== null) {
+      const data = JSON.parse(lastMessage.data);
+      const target = data.d.t;
+      if (target !== 'frontend') return; // Not the message to frontend.
+      const currTimestamp = Math.floor(Date.now() / 1000);
+      const receivedTimestamp = data.d.ts;
+      if (currTimestamp - receivedTimestamp > 5) {
+        console.warn(
+          'Msg Received From Backend is outside the Recv Window, ABANDON the data!'
+        );
+        return;
+      }
+      const message = data.d.m;
+      const msgProperties = Object.getOwnPropertyNames(message);
+      if (msgProperties.includes('status')) {
+        setStatus(message.status);
+      }
+      if (msgProperties.includes('params')) {
+        setParams(message.params);
+      }
+      if (msgProperties.includes('response')) {
+        setResponse(message.response);
+      }
+      if (msgProperties.includes('loggingInfo')) {
+        setLoggingInfo(message.loggingInfo);
+      }
+      if (msgProperties.includes('loggingWarning')) {
+        setLoggingWarning(message.loggingWarning);
+      }
+      if (msgProperties.includes('loggingError')) {
+        setLoggingError(message.loggingError);
+      }
+    }
+  }, [lastMessage]);
+
+  useEffect(() => {
+    // do sth with status
+    console.log("update on status.")
+    console.log(status)
+    console.log("~~~")
+  }, [status]);
+
+  useEffect(() => {
+    // do sth with params
+  }, [params]);
+
+  useEffect(() => {
+    // do sth with response
+  }, [response]);
+
+  useEffect(() => {
+    // do sth with loggingInfo
+  }, [loggingInfo]);
+
+  useEffect(() => {
+    // do sth with loggingInfo
+  }, [loggingInfo]);
+
+  useEffect(() => {
+    // do sth with loggingInfo
+  }, [loggingInfo]);
+
+  useEffect(() => {
+    // sent msg to backend for test.
+    setInterval(() => {
+      publishMessage({ hello: 'world' });
+    }, 3000);
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -55,9 +131,12 @@ const Home = () => {
 
       <main className={styles.main}>
         <div>
-          <p>Hello World!</p>
           <span>The WebSocket is currently {connectionStatus}</span>
-          {lastMessage && <p>{lastMessage.data}</p>}
+
+          <p>{JSON.stringify(status)}</p>
+          <br />
+          <br />
+          {/* {lastMessage && <p>{lastMessage.data}</p>} */}
         </div>
       </main>
     </div>

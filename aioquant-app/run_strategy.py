@@ -5,7 +5,7 @@ from aioquant import quant
 
 
 def initialize():
-    from arbitrage_strategy import MyStrategy
+    from demo_strategy import MyStrategy
     MyStrategy()
 
 

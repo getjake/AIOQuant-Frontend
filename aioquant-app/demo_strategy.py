@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+from setuptools import Command
 from aioquant.datas.market_data import SpreadData
 from aioquant.event import EventSpread
 from aioquant.utils.warning import WarningSubscribe, WarningMessage
@@ -51,6 +52,22 @@ class MyStrategy:
         初始化
         """
         # 初始化变量
+        self.status = {} # The read-only status
+        self.params = {} # The changable params
+
+        # Init the value
+        self.status['exchanges_connected'] = 4
+        self.status['profitable_trades'] = 38
+        self.status['overall_pnl_usd'] = 283
+        self.status['fees_paid'] = 591
+        self.status['trade_allow'] = True
+
+        # Init the params
+        self.params["binance_on"] = True
+        self.params["huobi_on"] = True
+        self.params["okx_on"] = False
+        self.params["bitmex_on"] = True
+        self.params["max_positon"] = 10000
 
         SingleTask.run(self.initialize) # 初始化
 
@@ -66,28 +83,59 @@ class MyStrategy:
             "orderbook_update_callback":self.on_event_orderbook_update,
             "orderbook_length": config.ORDERBOOK_LENGTH,
         }
-        BinanceSwapMarket(**cc)
+        BinanceSwapMarket(**cc) # FOR DEMO, NO USE
         
         CommandSubscribe(self.on_event_command_callback)
-        LoopRunTask.register(self.publish_command, 5)
+        LoopRunTask.register(self.publish_command, 1)
+    
+    @staticmethod
+    def logging(msg, level="info", *args, **kwargs):
+        """
+        Logging the Msg and send it to frontend!
+        Args:
+            msg: The logger.content
+            level: info, warning, error.
+        """
+        d = {}
+        if level == "error":
+            logger.error(msg)
+            d = {"loggingError": msg}
+        elif level == "warning":
+            logger.warn(msg)
+            d = {"loggingWarning": msg}
+        else:
+            logger.info(msg)
+            d = {"loggingInfo": msg}
+        if d:
+            CommandPublish.publish(target="frontend", message=d)
 
     async def publish_command(self, *args, **kwargs):
-        # logger.info("Running publish_command::")
-        target = "frontend"
-        timestamp = tools.get_cur_timestamp()
+        """
+        Routinely send status data to frontend!
+        Just for test!
+        """
+        # The msg to be sent to frontend. - Routine
+
         message = {
-            "main": "The msg is sent via `publish_command` function.",
-            "timestamp": timestamp
+            "status": self.status,
+            "params": self.params
         }
-        CommandPublish.publish(target=target, message=message)
 
+        CommandPublish.publish(target="frontend", message=message)
 
+        # self.logging("This is a test msg")
     @async_method_locker("on_event_init_callback.locker", timeout=15)
     async def on_event_command_callback(self, data, **kwargs):
+        """
+        Do something when program received command from frontend.
+        """
         target = data.target
         if target == 'backend':
            message = data.message
-           logger.info("I received a msg from frontend::: ", message)
+           logger.info(message)
+           if not message.get('request'):
+               return
+        # Change the params on request
 
     @async_method_locker("on_event_init_callback.locker", timeout=15)
     async def on_event_init_callback(self, success: bool, **kwargs):
@@ -102,15 +150,12 @@ class MyStrategy:
         """
         logger.info("error:", error, "kwargs:", kwargs, caller=self)
 
-    # @async_method_locker("on_event_orderbook_update.locker", timeout=15)
+    @async_method_locker("on_event_orderbook_update.locker", timeout=15)
     async def on_event_orderbook_update(self, orderbook: Orderbook):
         """
         订单薄更新回调
         self.orderbook 本地记录
         """
-        # Update orderbook -> local
-        # key = f"{orderbook.platform}${orderbook.symbol}"
-        # logger.info("Orderbook has been received!")
         # logger.info(orderbook)
         pass
        
