@@ -1,17 +1,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-
 import Head from 'next/head';
-import Image from 'next/image';
 import styles from '../styles/Home.module.css';
+
 const Home = () => {
   //Public API that will echo messages sent to it back to the client
   const socketUrl = 'ws://localhost:8080';
   const [messageHistory, setMessageHistory] = useState([]);
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
   useEffect(() => {
-    console.log('I received the LAST Message:::');
-    if (lastMessage) {
+    if (lastMessage !== null) {
       console.log(lastMessage.data);
     }
     if (lastMessage !== null) {
@@ -21,18 +19,22 @@ const Home = () => {
 
   useEffect(()=>{
     // HOW TO SEND MSG.
-    const message = {
-      n: 'CommandExchange',
-      d: {
-        t: 'frontend',
-        m: {
-          main: 'this message is sent from NEXTJS INTERFACE',
+    setInterval(() => {
+      const message = {
+        n: 'CommandExchange',
+        d: {
+          t: 'backend',
+          m: {
+            main: 'this message is sent from NEXTJS INTERFACE',
+            time: +new Date()
+          },
+          ts: 11,
         },
-        ts: 11,
-      },
-    };
-    sendMessage(JSON.stringify(message))
-
+      };
+      sendMessage(JSON.stringify(message))
+      console.log("I sent the message ")
+    }, 3000);
+    
   },[])
 
   const connectionStatus = {

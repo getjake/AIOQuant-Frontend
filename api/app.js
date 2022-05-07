@@ -10,21 +10,6 @@ const exchange = 'Command';
 const queuePublish = 'USDT_ARBITRAGE_SERVER.Command.WEBSOCKET2AIOQ';
 const queueSubscribe = 'USDT_ARBITRAGE_SERVER.Command.AIOQ2WEBSOCKET';
 
-const demoMessage = {
-  n: 'CommandExchange',
-  d: {
-    t: 'frontend',
-    m: {
-      main: 'this message is sent from nodejs',
-    },
-    ts: 11,
-  },
-};
-
-
-
-
-
 let channelPublish;
 let channelSubscribe;
 
@@ -49,6 +34,7 @@ const init = async () => {
   });
   await channelSubscribe.assertExchange(exchange, 'topic', { durable: true });
   await channelSubscribe.bindQueue(queueSubscribe, exchange, '');
+  console.log('Websocket API Ready, waiting for client connection')
 };
 init();
 
@@ -65,9 +51,12 @@ wss.on('connection', (ws) => {
             return;
           }
           const _message = JSON.parse(decompressedData.toString('utf8'));
-          console.log("Websocket server received message from backend, Will sent it to frontend");
-          console.log(_message);
-          ws.send(JSON.stringify(_message)); 
+          if(_message.d.t === 'frontend') {
+            // `frontend` means msg from backend and target is frontend.
+            console.log("Websocket server received message from backend, Will sent it to frontend");
+            console.log(_message);
+            ws.send(JSON.stringify(_message)); 
+          } 
         });
       },
       { noAck: true }
@@ -82,7 +71,9 @@ wss.on('connection', (ws) => {
     try {
       // rawData is String; msg is an Object
       const msg = JSON.parse(rawData);
-      console.log(`Client has sent us:`, msg);
+      // make sure the msg's target is backend.
+      if(msg.d.t !== 'backend') return;
+      console.log(`Client has sent us AND will be forwarded to the backend:`, msg);
       // const msg = demoMessage
       const _message = Buffer.from(JSON.stringify(msg));
       zlib.deflate(_message, (err, compressedData) => {

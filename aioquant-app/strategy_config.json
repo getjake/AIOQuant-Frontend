@@ -1,0 +1,42 @@
+{
+  "LOG": {
+    "console": true,
+    "level": "INFO",
+    "path": "/home/code",
+    "name": "trade.log",
+    "clear": false,
+    "backup_count": 5
+  },
+  "RABBITMQ": {
+    "host": "127.0.0.1",
+    "port": 5672,
+    "username": "chris",
+    "password": "chris"
+  },
+  "MONGODB": {
+    "host": "127.0.0.1",
+    "port": 27017,
+    "username": "aioquant",
+    "password": "aioquant"
+  },
+  "REDIS": {
+    "host": "127.0.0.1",
+    "port": 6379
+  },
+  "HEARTBEAT": {
+    "interval": 0
+  },
+
+  "ACCOUNTS": {
+    "binance_swap": {
+      "ACCOUNT_NAME": "default",
+      "ACCESS_KEY": "",
+      "SECRET_KEY": "",
+      "PASSPHRASE": ""
+    }
+ 
+  },
+  "SERVER_ID": "USDT_ARBITRAGE_SERVER",
+  "RUN_TIME_UPDATE": true,
+  "STRATEGY_NAME": "USDT_ARBITRAGE"
+}
