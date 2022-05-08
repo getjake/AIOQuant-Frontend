@@ -86,7 +86,7 @@ class MyStrategy:
         BinanceSwapMarket(**cc) # FOR DEMO, NO USE
         
         CommandSubscribe(self.on_event_command_callback)
-        LoopRunTask.register(self.publish_command, 1)
+        LoopRunTask.register(self.publish_command, 0.2)
     
     @staticmethod
     def logging(msg, level="info", *args, **kwargs):
@@ -114,8 +114,9 @@ class MyStrategy:
         Routinely send status data to frontend!
         Just for test!
         """
+        logger.info("Sending Status and Params to frontend!")
         # The msg to be sent to frontend. - Routine
-
+        self.status['fees_paid'] = tools.get_cur_timestamp()
         message = {
             "status": self.status,
             "params": self.params
