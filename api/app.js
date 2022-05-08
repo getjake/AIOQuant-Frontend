@@ -40,6 +40,7 @@ init();
 
 wss.on('connection', (ws) => {
   console.log("Websocket client connected!")
+  
   try {
     // Receive Message from backend, send it to frontend
     channelSubscribe.consume(
