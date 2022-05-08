@@ -53,8 +53,8 @@ wss.on('connection', (ws) => {
           const _message = JSON.parse(decompressedData.toString('utf8'));
           if(_message.d.t === 'frontend') {
             // `frontend` means msg from backend and target is frontend.
-            console.log("Websocket server received message from backend, Will sent it to frontend");
-            console.log(_message);
+            // console.log("Websocket server received message from backend, Will sent it to frontend");
+            // console.log(_message);
             ws.send(JSON.stringify(_message)); 
           } 
         });
@@ -73,7 +73,7 @@ wss.on('connection', (ws) => {
       const msg = JSON.parse(rawData);
       // make sure the msg's target is backend.
       if(msg.d.t !== 'backend') return;
-      console.log(`Client has sent us AND will be forwarded to the backend:`, msg);
+      // console.log(`Client has sent us AND will be forwarded to the backend:`, msg);
       // const msg = demoMessage
       const _message = Buffer.from(JSON.stringify(msg));
       zlib.deflate(_message, (err, compressedData) => {
@@ -83,7 +83,7 @@ wss.on('connection', (ws) => {
           return;
         }
         channelPublish.publish(exchange, routingKey, compressedData);
-        console.log('Msg sent to Backend via Websocket Server!!');
+        // console.log('Msg sent to Backend via Websocket Server!!');
       });
     } catch (error) {
       console.error('Error on ws-message');
