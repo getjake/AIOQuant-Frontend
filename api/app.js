@@ -1,3 +1,4 @@
+require('console-stamp')(console, '[HH:MM:ss.l]');
 const amqp = require('amqplib');
 const WebSocketServer = require('ws');
 const zlib = require('zlib');
@@ -53,10 +54,13 @@ wss.on('connection', (ws) => {
           }
           const _message = JSON.parse(decompressedData.toString('utf8'));
           if(_message.d.t === 'frontend') {
-            // `frontend` means msg from backend and target is frontend.
-            // console.log("Websocket server received message from backend, Will sent it to frontend");
-            // console.log(_message);
-            ws.send(JSON.stringify(_message)); 
+            // Send to all connected clients
+            const data = JSON.stringify(_message)
+            wss.clients.forEach((client) => {
+              if(client !== ws && client.readyState === WebSocketServer.OPEN) {
+                client.send(data)
+              }
+            })
           } 
         });
       },
