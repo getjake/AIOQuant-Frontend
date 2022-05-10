@@ -1,8 +1,10 @@
-import dynamic from 'next/dynamic'
+import dynamic from 'next/dynamic';
 import React, { useState, useCallback, useEffect } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Header from 'components/Header';
 import NavBar from 'components/NavBar';
+import Status from 'components/Status';
+import Params from 'components/Params';
 import {
   Grid,
   Item,
@@ -20,7 +22,11 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
+
 const Home = () => {
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
   // Websocket Endpoint
   const socketUrl = 'ws://localhost:8080/';
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
@@ -48,6 +54,7 @@ const Home = () => {
   const [loggingError, setLoggingError] = useState('');
   // Command to be sent to backend
   const [request, setRequest] = useState({});
+  const [newParams, setNewParams] = useState({});
 
   // Update Connection Status
   const connectionStatus = {
@@ -61,7 +68,8 @@ const Home = () => {
   useEffect(() => {
     if (connectionStatus === 'Open') setWsConnectionStatus('CONNECTED');
     if (connectionStatus === 'Closed') setWsConnectionStatus('DISCONNECTED');
-    if (connectionStatus === 'Connectiong') setWsConnectionStatus('CONNECTING...');
+    if (connectionStatus === 'Connectiong')
+      setWsConnectionStatus('CONNECTING...');
   }, [connectionStatus]);
 
   // ****** Functions *******
@@ -77,6 +85,7 @@ const Home = () => {
         ts: Math.floor(Date.now() / 1000),
       },
     };
+    console.log("Going to send msg.")
     sendMessage(JSON.stringify(message));
   };
 
@@ -97,11 +106,10 @@ const Home = () => {
       }
       const message = data.d.m;
       const msgProperties = Object.getOwnPropertyNames(message);
-      console.log(">>> New Msg Received:: ", message)
       if (msgProperties.includes('status')) {
         const _status = Object.keys(message.status).map((key) => [
           key,
-          message.status[key],
+          message.status[key].toString(),
         ]);
         setStatus(_status);
       }
@@ -125,12 +133,14 @@ const Home = () => {
 
   useEffect(() => {
     // do sth with status
-    console.log('Status Update Received:');
-    console.log(status);
+    // console.log('Status Update Received:');
+    // console.log(status);
   }, [status]);
 
   useEffect(() => {
     // do sth with params
+    // console.log('params:::');
+    // console.log(params);
   }, [params]);
 
   useEffect(() => {
@@ -167,52 +177,21 @@ const Home = () => {
       {/* Main Content */}
       <Grid container spacing={2} style={{ marginTop: '0.5rem' }}>
         <Grid item xs={4} style={{ maxWidth: 405 }}>
-          <Card>
-            <CardHeader title="STATUS" />
-            <CardContent>
-              <TableContainer component={Paper}>
-                <Table
-                  sx={{ minWidth: 300, maxWidth: 400 }}
-                  aria-label="simple table"
-                >
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align="right">Title</TableCell>
-                      <TableCell align="right">Value</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {status.map((item) => (
-                      <TableRow
-                        key={item[0]}
-                        sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                        }}
-                      >
-                        <TableCell component="th" scope="row" align="right">
-                          {item[0]}
-                        </TableCell>
-                        <TableCell component="th" scope="row" align="right">
-                          {item[1]}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
+          <Status status={status} />
+        </Grid>
+        <Grid item xs={8} style={{ maxWidth: 1200 }}>
+          <Params
+            params={params}
+            newParams={newParams}
+            setNewParams={setNewParams}
+            publishMessage={publishMessage}
+          />
         </Grid>
       </Grid>
-
-      <br />
-      <br />
-      <br />
-      {/* <p>{JSON.stringify(status)}</p> */}
     </>
   );
 };
 
 // export default Home;
 
-export default dynamic(()=> Promise.resolve(Home), {ssr: false});
+export default dynamic(() => Promise.resolve(Home), { ssr: false });

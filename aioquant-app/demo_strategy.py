@@ -65,9 +65,10 @@ class MyStrategy:
         # Init the params
         self.params["binance_on"] = True
         self.params["huobi_on"] = True
-        self.params["okx_on"] = False
+        self.params["okx_leverage"] = 1.5
         self.params["bitmex_on"] = True
         self.params["max_positon"] = 10000
+        self.params["trade_direction"] = "OPEN"
 
         SingleTask.run(self.initialize) # 初始化
 
@@ -86,8 +87,39 @@ class MyStrategy:
         BinanceSwapMarket(**cc) # FOR DEMO, NO USE
         
         CommandSubscribe(self.on_event_command_callback)
-        LoopRunTask.register(self.publish_command, 0.2)
+        LoopRunTask.register(self.publish_command, 1)
     
+    @staticmethod
+    def transform_params(params: dict):
+        """
+        Translate the Params for Frontend Parsing
+
+        Example: 
+            Input:
+                params = {
+                    'binance_on': True,
+                    'max_position': 1500,
+                    'max_leverage': 1.5,
+                    'trade_direction': 'LONG'
+                }
+
+            Output:
+                result = [
+                    ['binance_on', True, 'bool'],
+                    ['max_position', 1500, 'int'],
+                    ['max_leverage', 1.5, 'float'],
+                    ['trade_direction', 'LONG', 'str']
+                ]
+        """
+        try:
+            _ = []
+            for i in params.items():
+                _.append([i[0], i[1], type(i[1]).__name__])
+            return _
+        except:
+            logger.error("`self.params` error! Cannot transform it!")
+            return _
+        
     @staticmethod
     def logging(msg, level="info", *args, **kwargs):
         """
@@ -119,7 +151,7 @@ class MyStrategy:
         self.status['fees_paid'] = tools.get_cur_timestamp()
         message = {
             "status": self.status,
-            "params": self.params
+            "params": self.transform_params(self.params)
         }
 
         CommandPublish.publish(target="frontend", message=message)

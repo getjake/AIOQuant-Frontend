@@ -8,9 +8,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Moment from 'react-moment';
 
 const NavBar = ({ strategy, wsConnectionStatus, updatedTimestamp }) => {
-  useEffect(() => {
-    console.log('wsConnectionStatus:::', wsConnectionStatus);
-  }, [wsConnectionStatus]);
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
