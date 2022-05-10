@@ -163,12 +163,22 @@ class MyStrategy:
         Do something when program received command from frontend.
         """
         target = data.target
-        if target == 'backend':
-           message = data.message
-           logger.info(message)
-           if not message.get('request'):
-               return
+        if target != 'backend':
+            return
+        message = data.message
+        logger.info(message)
+        if not message.get('request'):
+            return
         # Change the params on request
+        requests: dict = message['request']
+        self.params.update(requests)
+        
+        # Msg to be sent to frontend
+        _msg = {
+            'response': 'success'
+        }
+        CommandPublish.publish(target="frontend", message=_msg)
+
 
     @async_method_locker("on_event_init_callback.locker", timeout=15)
     async def on_event_init_callback(self, success: bool, **kwargs):

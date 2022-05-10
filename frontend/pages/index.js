@@ -85,7 +85,6 @@ const Home = () => {
         ts: Math.floor(Date.now() / 1000),
       },
     };
-    console.log("Going to send msg.")
     sendMessage(JSON.stringify(message));
   };
 
@@ -145,6 +144,10 @@ const Home = () => {
 
   useEffect(() => {
     // do sth with response
+    if(response === 'success') {
+  
+      enqueueSnackbar("Update Params successfully", {variant: 'success'})
+    } 
   }, [response]);
 
   useEffect(() => {
