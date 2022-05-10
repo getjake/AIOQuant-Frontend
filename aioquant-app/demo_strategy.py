@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
-
-from setuptools import Command
+import asyncio
 from aioquant.datas.market_data import SpreadData
 from aioquant.event import EventSpread
 from aioquant.utils.warning import WarningSubscribe, WarningMessage
@@ -43,17 +42,19 @@ from aioquant.markets.huobi_swap import HuobiSwapMarket as HuobiSwapMarket
 from aioquant.markets.okex_swap import OKExSwapMarket as OkexSwapMarket
 from aioquant.markets.okex_swap_v5 import OKExV5SwapMarket as OKExV5SwapMarket
 
+
 class MyStrategy:
     """
     For Test Websocket Connection to the frontend.
     """
+
     def __init__(self):
         """
         初始化
         """
         # 初始化变量
-        self.status = {} # The read-only status
-        self.params = {} # The changable params
+        self.status = {}  # The read-only status
+        self.params = {}  # The changable params
 
         # Init the value
         self.status['exchanges_connected'] = 4
@@ -70,25 +71,26 @@ class MyStrategy:
         self.params["max_positon"] = 10000
         self.params["trade_direction"] = "OPEN"
 
-        SingleTask.run(self.initialize) # 初始化
+        SingleTask.run(self.initialize)  # 初始化
 
     async def initialize(self, *args, **kwargs):
         """ Initialize the strategy with several functions.
         """
 
         cc = {
-            "symbols" :[{"name": ["BTC-USDT-SWAP","ETH-USDT-SWAP"],"type":"swap"}],
-            "channels" :['orderbook'],
-            "orderbook_refresh": config.ORDERBOOK_REFRESH, # False -> incremental, True: 全量
-            "platform":'binance_swap',
-            "orderbook_update_callback":self.on_event_orderbook_update,
+            "symbols": [{"name": ["BTC-USDT-SWAP", "ETH-USDT-SWAP"], "type":"swap"}],
+            "channels": ['orderbook'],
+            "orderbook_refresh": config.ORDERBOOK_REFRESH,  # False -> incremental, True: 全量
+            "platform": 'binance_swap',
+            "orderbook_update_callback": self.on_event_orderbook_update,
             "orderbook_length": config.ORDERBOOK_LENGTH,
         }
-        BinanceSwapMarket(**cc) # FOR DEMO, NO USE
-        
+        BinanceSwapMarket(**cc)  # FOR DEMO, NO USE
+
         CommandSubscribe(self.on_event_command_callback)
         LoopRunTask.register(self.publish_command, 1)
-    
+        LoopRunTask.register(self.publish_log, 1)
+
     @staticmethod
     def transform_params(params: dict):
         """
@@ -119,7 +121,7 @@ class MyStrategy:
         except:
             logger.error("`self.params` error! Cannot transform it!")
             return _
-        
+
     @staticmethod
     def logging(msg, level="info", *args, **kwargs):
         """
@@ -128,18 +130,20 @@ class MyStrategy:
             msg: The logger.content
             level: info, warning, error.
         """
-        d = {}
+        _level = level if level else 'info'
+        d = {
+            'logging': {
+                'level': _level, 'msg': msg, "ts": tools.get_cur_timestamp()
+            }
+        }
+
         if level == "error":
             logger.error(msg)
-            d = {"loggingError": msg}
         elif level == "warning":
             logger.warn(msg)
-            d = {"loggingWarning": msg}
         else:
             logger.info(msg)
-            d = {"loggingInfo": msg}
-        if d:
-            CommandPublish.publish(target="frontend", message=d)
+        CommandPublish.publish(target="frontend", message=d)
 
     async def publish_command(self, *args, **kwargs):
         """
@@ -156,7 +160,15 @@ class MyStrategy:
 
         CommandPublish.publish(target="frontend", message=message)
 
-        # self.logging("This is a test msg")
+    async def publish_log(self, *args, **kwargs):
+        logger.info("Running Publish log")
+        await asyncio.sleep(0.1)
+        self.logging("This is a test = info- msg", level='info')
+        await asyncio.sleep(0.1)
+        self.logging("This is a test = warning- msg", level='warning')
+        await asyncio.sleep(0.1)
+        self.logging("This is a test = error- msg", level='error')
+
     @async_method_locker("on_event_init_callback.locker", timeout=15)
     async def on_event_command_callback(self, data, **kwargs):
         """
@@ -172,13 +184,12 @@ class MyStrategy:
         # Change the params on request
         requests: dict = message['request']
         self.params.update(requests)
-        
+
         # Msg to be sent to frontend
         _msg = {
             'response': 'success'
         }
         CommandPublish.publish(target="frontend", message=_msg)
-
 
     @async_method_locker("on_event_init_callback.locker", timeout=15)
     async def on_event_init_callback(self, success: bool, **kwargs):
@@ -201,4 +212,3 @@ class MyStrategy:
         """
         # logger.info(orderbook)
         pass
-       

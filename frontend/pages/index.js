@@ -5,6 +5,7 @@ import Header from 'components/Header';
 import NavBar from 'components/NavBar';
 import Status from 'components/Status';
 import Params from 'components/Params';
+import Logging from 'components/Logging'
 import {
   Grid,
   Item,
@@ -21,10 +22,12 @@ import {
   TableHead,
   TableRow,
   Paper,
+  TextareaAutosize,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 
 const Home = () => {
+  //@DEBUG
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   // Websocket Endpoint
@@ -44,17 +47,14 @@ const Home = () => {
   const strategy = 'DEMO_STRATEGY';
 
   // Message Structure from Backend - Info received from backend
+  const [loggingHistory, setLoggingHistory] = useState([])
   const [updatedTimestamp, setUpdatedTimestamp] = useState(0);
   const [wsConnectionStatus, setWsConnectionStatus] = useState('DISCONNECTED');
   const [status, setStatus] = useState([]);
   const [params, setParams] = useState([]);
   const [response, setResponse] = useState({});
-  const [loggingInfo, setLoggingInfo] = useState('');
-  const [loggingWarning, setLoggingWarning] = useState('');
-  const [loggingError, setLoggingError] = useState('');
-  // Command to be sent to backend
-  const [request, setRequest] = useState({});
-  const [newParams, setNewParams] = useState({});
+  const [logging, setLogging] = useState({});
+  const [newParams, setNewParams] = useState({});  // Command to be sent to backend
 
   // Update Connection Status
   const connectionStatus = {
@@ -118,56 +118,26 @@ const Home = () => {
       if (msgProperties.includes('response')) {
         setResponse(message.response);
       }
-      if (msgProperties.includes('loggingInfo')) {
-        setLoggingInfo(message.loggingInfo);
+      if (msgProperties.includes('logging')) {
+        const logLevel = message.logging.level.toUpperCase()
+        const logMsg = message.logging.msg
+        const logTime = new Date(message.logging.ts*1000).toLocaleTimeString('zh-CN')
+        setLogging({logLevel, logMsg, logTime});
       }
-      if (msgProperties.includes('loggingWarning')) {
-        setLoggingWarning(message.loggingWarning);
-      }
-      if (msgProperties.includes('loggingError')) {
-        setLoggingError(message.loggingError);
-      }
+
     }
   }, [lastMessage]);
 
-  useEffect(() => {
-    // do sth with status
-    // console.log('Status Update Received:');
-    // console.log(status);
-  }, [status]);
+  useEffect(()=>{
+    const _newLoggingHistory = [logging].concat(loggingHistory).slice(0, 100)
+    setLoggingHistory(_newLoggingHistory)
+  },[logging])
 
   useEffect(() => {
-    // do sth with params
-    // console.log('params:::');
-    // console.log(params);
-  }, [params]);
-
-  useEffect(() => {
-    // do sth with response
-    if(response === 'success') {
-  
-      enqueueSnackbar("Update Params successfully", {variant: 'success'})
-    } 
+    if (response === 'success') {
+      enqueueSnackbar('Update Params successfully', { variant: 'success' });
+    }
   }, [response]);
-
-  useEffect(() => {
-    // do sth with loggingInfo
-  }, [loggingInfo]);
-
-  useEffect(() => {
-    // do sth with loggingInfo
-  }, [loggingInfo]);
-
-  useEffect(() => {
-    // do sth with loggingInfo
-  }, [loggingInfo]);
-
-  useEffect(() => {
-    // sent msg to backend for test.
-    setInterval(() => {
-      publishMessage({ hello: 'world' });
-    }, 3000);
-  }, []);
 
   return (
     <>
@@ -179,16 +149,19 @@ const Home = () => {
       />
       {/* Main Content */}
       <Grid container spacing={2} style={{ marginTop: '0.5rem' }}>
-        <Grid item xs={4} style={{ maxWidth: 405 }}>
+        <Grid item xs={12} md={6} lg={4}>
           <Status status={status} />
         </Grid>
-        <Grid item xs={8} style={{ maxWidth: 1200 }}>
+        <Grid item xs={12} md={6} lg={4}>
           <Params
             params={params}
             newParams={newParams}
             setNewParams={setNewParams}
             publishMessage={publishMessage}
           />
+        </Grid>
+        <Grid item  xs={12} md={12} lg={4}>
+          <Logging loggingHistory={loggingHistory} setLoggingHistory={setLoggingHistory}/>
         </Grid>
       </Grid>
     </>
