@@ -8,21 +8,6 @@ import Params from 'components/Params';
 import Logging from 'components/Logging'
 import {
   Grid,
-  Item,
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  List,
-  ListItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TextareaAutosize,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 
@@ -43,10 +28,9 @@ const Home = () => {
   });
 
   // ****** States *******
-  // temp params
-  const strategy = 'DEMO_STRATEGY';
 
   // Message Structure from Backend - Info received from backend
+  const [strategy, setStrategy] = useState('DEMO_STRATEGY')
   const [loggingHistory, setLoggingHistory] = useState([])
   const [updatedTimestamp, setUpdatedTimestamp] = useState(0);
   const [wsConnectionStatus, setWsConnectionStatus] = useState('DISCONNECTED');
@@ -144,6 +128,7 @@ const Home = () => {
       <Header title="aioqauntTitle" />
       <NavBar
         strategy={strategy}
+        setStrategy={setStrategy}
         wsConnectionStatus={wsConnectionStatus}
         updatedTimestamp={updatedTimestamp}
       />

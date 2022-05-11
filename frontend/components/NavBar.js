@@ -1,39 +1,69 @@
 import React, { useEffect, useState } from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+  TextField,
+  Button,
+} from '@mui/material';
 import Moment from 'react-moment';
+import { useSnackbar } from 'notistack';
 
-const NavBar = ({ strategy, wsConnectionStatus, updatedTimestamp }) => {
+const NavBar = ({
+  strategy,
+  setStrategy,
+  wsConnectionStatus,
+  updatedTimestamp,
+}) => {
+
+  const { enqueueSnackbar } = useSnackbar();
+  const [strategyNameInput, setStrategyNameInput] = useState('');
+  const updateStrategyName = () => {
+    if (strategyNameInput.length === 0) {
+      enqueueSnackbar('Please enter strategy name!', {variant: 'error'})
+      return
+    }
+    setStrategy(strategyNameInput)
+    enqueueSnackbar('Strategy Set Successfully!', {variant: 'success'})
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {strategy}
           </Typography>
+          <TextField
+            id="standard-basic"
+            label="Strategy Name..."
+            variant="standard"
+            onChange={(e) => {
+              setStrategyNameInput(e.target.value);
+            }}
+          />
+          <Button
+            variant="contained"
+            style={{ marginLeft: '2rem', marginRight: '4rem' }}
+            onClick={updateStrategyName}
+          >
+            SET STRATEGY
+          </Button>
           <Typography variant="p" component="div" sx={{ flexGrow: 0.2 }}>
             {wsConnectionStatus}
           </Typography>
           <Typography variant="p" component="div" sx={{ flexGrow: 0.2 }}>
-            Updated at{' '}
-            {
-              <Moment fromNow>
-                {new Date(Math.floor(updatedTimestamp)).toISOString()}
-              </Moment>
-            }
+            {updatedTimestamp === 0 ? (
+              ''
+            ) : (
+              <>
+                Updated at
+                <Moment fromNow>
+                  {new Date(Math.floor(updatedTimestamp)).toISOString()}
+                </Moment>
+              </>
+            )}
           </Typography>
         </Toolbar>
       </AppBar>

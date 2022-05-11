@@ -103,33 +103,33 @@ const Params = ({ params, newParams, setNewParams, publishMessage }) => {
     // Validate
     const value = newParams[param].toString();
     const correctType = params.filter((item) => item[0] === param)[0].at(2);
-    let result = false;
+    let isValid = false;
     let newValue;
     if (correctType === 'float') {
-      result = validator.isFloat(value);
+      isValid = validator.isFloat(value);
       newValue = parseFloat(value);
     } else if (correctType === 'int') {
-      result = validator.isInt(value);
+      isValid = validator.isInt(value);
       newValue = parseInt(value);
     } else if (correctType === 'str') {
-      result = true;
+      isValid = true;
     } else if (correctType === 'bool') {
-      result = true;
+      isValid = true;
     }
 
     // Not valid
-    if (!result) {
+    if (!isValid) {
       enqueueSnackbar(
         `Param ${param} should be '${correctType}'. Check Input!`,
         { variant: 'error' }
       );
-      return result;
+      return isValid;
     }
     // Valid, and update new value
     if (newValue) {
       setNewParams({ ...newParams, [param]: newValue });
     } 
-    return result;
+    return isValid;
   };
 
   const updateParamsHandler = () => {
@@ -150,8 +150,10 @@ const Params = ({ params, newParams, setNewParams, publishMessage }) => {
     const data = {
       request: {...newParams}
     };
+    console.log("Data Submitted::", data)
     publishMessage(data)
     enqueueSnackbar('Requested', { variant: 'info' });
+    setNewParams({})
   };
 
   // CHECK NEW PARAMS
